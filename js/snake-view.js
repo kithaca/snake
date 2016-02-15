@@ -76,7 +76,7 @@ View.prototype.step = function () {
 	catch(err) {
 		window.clearInterval(this.startGame);
 		console.log(err.message);
-		alert("Game Over!");
+		alert("Game Over! You collected " + (this.snake.segments.length-1) + " apple(s).");
 	}
 	finally {
 	}
