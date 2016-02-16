@@ -51,12 +51,11 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var View = __webpack_require__(4);
+	var View = __webpack_require__(2);
 	
 	$(function () {
 	  var $board = $("#board");
 	  new View($board);
-	  console.log("created game");
 	});
 
 
@@ -64,59 +63,103 @@
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var Board = __webpack_require__(3);
 	var Coord = __webpack_require__(5);
 	
-	
-	function Snake(front, dir, segments) {
-		this.front = front;
-		this.currentDir = dir;
-		this.segments = segments;
-		this.turning = false;
+	function View($el) {
+		this.$el = $el;
+		this.board = new Board();
+		this.snake = this.board.snake;
+		this.buildBoard();
+		this.render();
+		$(window).on('keydown', this.handleKeyEvent.bind(this));
+		this.startGame = setInterval(this.step.bind(this), 100);
 	}
 	
-	Snake.prototype.move = function () {
-		this.front = this.nextMove();
-		this.segments.unshift(this.front);
-		this.segments.pop();
-		this.turning = false;
-	};
+	View.prototype.buildBoard = function () {
+		for (var i = 0; i < this.board.maxRow; i++) {
+			var $row = $('<ul>');
 	
-	Snake.prototype.nextMove = function () {
-		var next = Coord.prototype.plus(this.front, this.currentDir);
-		return next;
-	};
-	
-	Snake.prototype.isOccupied = function (pos) {
-		if (Coord.prototype.includes(this.segments, pos)) {
-			return true;
-		} else {
-			return false;
+			for (var j = 0; j < this.board.maxCol; j++) {
+				var $square = $('<li>');
+				$row.append($square);
+				$square.data('pos', [i, j]);
+			}
+			this.$el.append($row);
 		}
 	};
 	
-	Snake.prototype.turn = function (dir) {
-		if (this.turning) {
-			return;
+	View.prototype.handleKeyEvent = function (e) {
+		e.preventDefault();
+		var newDir;
+		// debugger
+		switch(e.which) {
+			case 37: // left
+				newDir = "W";
+				break;
+			case 38: // up
+				newDir = "N";
+				break;
+			case 39: // right
+				newDir = "E";
+				break;
+			case 40: // down
+				newDir = "S";
+				break;
+			default:
+				// do nothing
+		}
+		var currDir = this.snake.currentDir;
+		if (newDir && newDir !== currDir && !Coord.prototype.isOpposite(newDir, currDir)) {
+			this.snake.turn(newDir);
 		} else {
-			this.turning = true;
-			this.currentDir = dir;
+			// do nothing
 		}
 	};
 	
-	Snake.prototype.grow = function () {
-		var opposite = Coord.prototype.findOpposite(this.currentDir);
-		var last = this.segments[this.segments.length-1];
-		var tail = Coord.prototype.plus(last, opposite);
-		this.segments.push(tail);
+	View.prototype.render = function () {
+		var $squares = $('li');
+		var view = this;
+		$.each($squares, function(idx, square) {
+			$square = $(square);
+			var squarePos = $square.data('pos');
+			$square.removeClass();
+			if (Coord.prototype.includes(view.snake.segments, squarePos)) {
+				$square.addClass('snakeSeg');
+	
+				if (Coord.prototype.equals(squarePos, view.snake.front)) {
+					$square.addClass('head');
+				}
+			} else if (Coord.prototype.equals(squarePos, view.board.apple)) {
+				$square.addClass('apple');
+			}
+		});
 	};
 	
-	module.exports = Snake;
+	View.prototype.step = function () {
+		try {
+			this.board.moveSnake();
+			this.render();
+		}
+		catch(err) {
+			window.clearInterval(this.startGame);
+			console.log(err.message);
+			var $scoreMessage = $('<h3>');
+			$scoreMessage.html("Game Over! You collected " + (this.snake.segments.length-1) + " apple(s).");
+			this.$el.prepend($scoreMessage);
+			// alert("Game Over! You collected " + (this.snake.segments.length-1) + " apple(s).");
+		}
+		finally {
+		}
+	};
+	
+	module.exports = View;
 
 /***/ },
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Snake = __webpack_require__(2);
+	var Snake = __webpack_require__(4);
 	var Coord = __webpack_require__(5);
 	
 	function Board(snake) {
@@ -181,91 +224,53 @@
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Board = __webpack_require__(3);
 	var Coord = __webpack_require__(5);
 	
-	function View($el) {
-		this.$el = $el;
-		this.board = new Board();
-		this.snake = this.board.snake;
-		this.buildBoard();
-		this.render();
-		$(window).on('keydown', this.handleKeyEvent.bind(this));
-		this.startGame = setInterval(this.step.bind(this), 100);
+	
+	function Snake(front, dir, segments) {
+		this.front = front;
+		this.currentDir = dir;
+		this.segments = segments;
+		this.turning = false;
 	}
 	
-	View.prototype.buildBoard = function () {
-		for (var i = 0; i < this.board.maxRow; i++) {
-			var $row = $('<ul>');
-	
-			for (var j = 0; j < this.board.maxCol; j++) {
-				var $square = $('<li>');
-				$row.append($square);
-				$square.data('pos', [i, j]);
-			}
-			this.$el.append($row);
-		}
+	Snake.prototype.move = function () {
+		this.front = this.nextMove();
+		this.segments.unshift(this.front);
+		this.segments.pop();
+		this.turning = false;
 	};
 	
-	View.prototype.handleKeyEvent = function (e) {
-		e.preventDefault();
-		var newDir;
-		// debugger
-		switch(e.which) {
-			case 37: // left
-				newDir = "W";
-				break;
-			case 38: // up
-				newDir = "N";
-				break;
-			case 39: // right
-				newDir = "E";
-				break;
-			case 40: // down
-				newDir = "S";
-				break;
-			default:
-				// do nothing
-		}
-		var currDir = this.snake.currentDir;
-		if (newDir && newDir !== currDir && !Coord.prototype.isOpposite(newDir, currDir)) {
-			this.snake.turn(newDir);
+	Snake.prototype.nextMove = function () {
+		var next = Coord.prototype.plus(this.front, this.currentDir);
+		return next;
+	};
+	
+	Snake.prototype.isOccupied = function (pos) {
+		if (Coord.prototype.includes(this.segments, pos)) {
+			return true;
 		} else {
-			// do nothing
+			return false;
 		}
 	};
 	
-	View.prototype.render = function () {
-		var $squares = $('li');
-		var view = this;
-		$.each($squares, function(idx, square) {
-			$square = $(square);
-			var squarePos = $square.data('pos');
-			$square.removeClass('snakeSeg');
-			$square.removeClass('apple');
-			if (Coord.prototype.includes(view.snake.segments, squarePos)) {
-				$square.addClass('snakeSeg');
-			} else if (Coord.prototype.equals(squarePos, view.board.apple)) {
-				$square.addClass('apple');
-			}
-		});
-	};
-	
-	View.prototype.step = function () {
-		try {
-			this.board.moveSnake();
-			this.render();
-		}
-		catch(err) {
-			window.clearInterval(this.startGame);
-			console.log(err.message);
-			alert("Game Over! You collected " + (this.snake.segments.length-1) + " apple(s).");
-		}
-		finally {
+	Snake.prototype.turn = function (dir) {
+		if (this.turning) {
+			return;
+		} else {
+			this.turning = true;
+			this.currentDir = dir;
 		}
 	};
 	
-	module.exports = View;
+	Snake.prototype.grow = function () {
+		var opposite = Coord.prototype.findOpposite(this.currentDir);
+		var last = this.segments[this.segments.length-1];
+		var tail = Coord.prototype.plus(last, opposite);
+		this.segments.push(tail);
+	};
+	
+	module.exports = Snake;
 
 /***/ },
 /* 5 */

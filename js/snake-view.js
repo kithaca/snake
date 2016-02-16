@@ -58,10 +58,13 @@ View.prototype.render = function () {
 	$.each($squares, function(idx, square) {
 		$square = $(square);
 		var squarePos = $square.data('pos');
-		$square.removeClass('snakeSeg');
-		$square.removeClass('apple');
+		$square.removeClass();
 		if (Coord.prototype.includes(view.snake.segments, squarePos)) {
 			$square.addClass('snakeSeg');
+
+			if (Coord.prototype.equals(squarePos, view.snake.front)) {
+				$square.addClass('head');
+			}
 		} else if (Coord.prototype.equals(squarePos, view.board.apple)) {
 			$square.addClass('apple');
 		}
@@ -76,7 +79,10 @@ View.prototype.step = function () {
 	catch(err) {
 		window.clearInterval(this.startGame);
 		console.log(err.message);
-		alert("Game Over! You collected " + (this.snake.segments.length-1) + " apple(s).");
+		var $scoreMessage = $('<h3>');
+		$scoreMessage.html("Game Over! You collected " + (this.snake.segments.length-1) + " apple(s).");
+		this.$el.prepend($scoreMessage);
+		// alert("Game Over! You collected " + (this.snake.segments.length-1) + " apple(s).");
 	}
 	finally {
 	}

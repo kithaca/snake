@@ -8,6 +8,13 @@
   </head>
   <body>
     <h1 class="title">Snake</h1>
+    <button onclick="restart()">New Game</button>
+    <script>
+      function restart() {
+        document.location.href = "";
+      }
+    </script>
+    <h3 class="message group"></h3>
     <div id="board" class="group"></div>
     <script src="./js/bundle.js"></script>
   </body>
